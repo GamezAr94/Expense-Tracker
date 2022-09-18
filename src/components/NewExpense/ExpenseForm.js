@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import './ExpenseForm.css';
 
 const ExpenseForm = () => {
-
-    
     return (<form>
         <div className="new-expense__controls">
             <label>Title</label>
-            <input type='text' onChange={titleChangeHandler}/>
+            <input type='text'/>
         </div>
         <div className="new-expense__controls">
             <label>Amount</label>
