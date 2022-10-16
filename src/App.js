@@ -1,7 +1,8 @@
-import React, {useState} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 
 import Expenses from "./components/Expenses/Expenses";
 import NewExpense from "./components/NewExpense/NewExpense";
+import Card from "./components/UI/Card";
 
 const DUMMY_EXPENSES = [
   {
@@ -26,7 +27,46 @@ const DUMMY_EXPENSES = [
 ];
 
 const App = () => {
-  const [expenses, setExpenses] = useState(DUMMY_EXPENSES);
+  const [expenses, setExpenses] = useState([]);
+  const [error, setError] = useState(null);
+
+  const fetchExpenses = useCallback(async () => {
+    setError(null);
+    try {
+      const response = await fetch('https://react-http-23f3f-default-rtdb.firebaseio.com/expenses.json');
+      if (!response.ok) {
+        throw new Error('error fetching expenses');
+      }
+      const data = await response.json();
+      const loadedExpenses = [];
+      for (const key in data) {
+        loadedExpenses.push({
+          id: key,
+          title: data[key].title,
+          amount: data[key].amount,
+          date: data[key].date
+        });
+      }
+      setExpenses(loadedExpenses);
+    } catch(error) {
+      setError(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchExpenses();
+  }, [fetchExpenses]);
+
+  const addNewExpense = async (expense) => {
+    await fetch('https://react-http-23f3f-default-rtdb.firebaseio.com/expenses.json', {
+      method: 'POST',
+      body: JSON.stringify(expense),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    fetchExpenses();
+  }
 
   const addExpenseHandler = (expense) => {
     setExpenses(prevExpenses => {
@@ -34,10 +74,14 @@ const App = () => {
     });
   };
 
+  let content = <Expenses items={expenses} />;
+  if (error) {
+    content = <Card>{error}</Card>;
+  }
   return (
   <div>
-    <NewExpense onAddExpense={addExpenseHandler}/>
-    <Expenses items={expenses}/>
+    <NewExpense onAddExpense={addNewExpense}/>
+    {content}
   </div>);
 }
 
